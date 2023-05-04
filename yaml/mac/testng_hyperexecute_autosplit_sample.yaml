@@ -1,45 +1,24 @@
----
-version: 0.1
-globalTimeout: 150
-testSuiteTimeout: 150
-testSuiteStep: 150
+# Maven
 
-runson: mac
+# Build your Java project and run tests with Apache Maven.
+# Add steps that analyze code, save build artifacts, deploy, and more:
+# https://docs.microsoft.com/azure/devops/pipelines/languages/java
 
-autosplit: true
-retryOnFailure: true
+trigger:
+  - main
 
-maxRetries: 1
-concurrency: 4
+pool:
+  vmImage: ubuntu-22.04
 
-shell: bash
+steps:
 
-env:
-  # PAT: ${{ .secrets.testKey }}
-  CACHE_DIR: m2_cache_dir
+  - script: |
+      echo %LT_BUILD_NAME%
+      curl -O https://downloads.lambdatest.com/hyperexecute/linux/hyperexecute
+      chmod u+x hyperexecute
+      ls -la
+      ./hyperexecute -u  meerap -k I9ADikrjXtd5i0yOXOtjmRQRSpcA5ng6PxIvHwEuWvNtQ8CTWd -i hypertest.yaml --verbose --download-artifacts --force-clean-artifacts
 
-cacheKey: '{{ checksum "pom.xml" }}'
-cacheDirectories:
-  - .m2
 
-pre:
-  # Download and install packages in the CACHE_DIR.
-  # Skip execution of the tests in the pre step
-  - mvn -Dmaven.repo.local=./.m2 dependency:resolve
-
-post:
-  - cat yaml/mac/testng_hyperexecute_autosplit_sample.yaml
-
-mergeArtifacts: true
-
-uploadArtefacts:
- - name: ExecutionSnapshots
-   path:
-    - target/surefire-reports/html/**
-
-testDiscovery:
-  type: raw
-  mode: dynamic
-  command: grep 'test name' xml/testng_mac.xml | awk '{print$2}' | sed 's/name=//g' | sed 's/>//g'
-
-testRunnerCommand: mvn test -Dplatname=mac -Dmaven.repo.local=./.m2 dependency:resolve -DselectedTests=$test
+  - script: |
+      echo "Test"
